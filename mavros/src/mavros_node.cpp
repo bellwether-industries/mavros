@@ -26,7 +26,6 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::executors::MultiThreadedExecutor exec(rclcpp::ExecutorOptions(), 2);
 
   rclcpp::NodeOptions options;
   // options.use_intra_process_comms(true);
@@ -34,11 +33,20 @@ int main(int argc, char * argv[])
   std::string fcu_url, gcs_url, uas_url;
   std::string base_link_frame_id, odom_frame_id, map_frame_id;
   int tgt_system = 1, tgt_component = 1;
+  int executor_threads = 4;
 
   auto node = std::make_shared<rclcpp::Node>("mavros_node", options);
-  exec.add_node(node);
 
   node->declare_parameter("fcu_url", fcu_url);
+  node->declare_parameter("executor_threads", executor_threads);
+  node->get_parameter("executor_threads", executor_threads);
+  if (executor_threads < 2) {
+    executor_threads = 2;
+  }
+
+  rclcpp::executors::MultiThreadedExecutor exec(rclcpp::ExecutorOptions(), executor_threads);
+  exec.add_node(node);
+
   node->declare_parameter("gcs_url", gcs_url);
   node->declare_parameter("tgt_system", tgt_system);
   node->declare_parameter("tgt_component", tgt_component);
